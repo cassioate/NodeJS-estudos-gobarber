@@ -1,0 +1,20 @@
+version: '2.1'
+services:
+
+  db:
+    container_name: db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: gobarberDB
+    volumes:
+      - ./var/lib/postgresql/data
+    ports:
+    - "15432:5432"
+    networks:
+    - dev-network
+
+networks:
+  dev-network:
+    driver: bridge

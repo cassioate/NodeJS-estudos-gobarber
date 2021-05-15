@@ -1,4 +1,5 @@
-// import App from './app'
-const App = require('./app')
+import App from './app';
+
+// const App = require('./app');
 
 App.listen(3333);
