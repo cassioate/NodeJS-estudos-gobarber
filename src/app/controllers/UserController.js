@@ -5,6 +5,7 @@ class UserController {
 
   async save (req, res) {
 
+    // validação
     const schema = Yup.object().shape({
       name: Yup.string().required(),
       email: Yup.string().email().required(),
@@ -20,6 +21,8 @@ class UserController {
     if (userExists){
       return res.status(400).json({error: 'user already exists'});
     }
+
+    // save
     const { id, name, email, provider } = await User.create(req.body);
 
     return res.json({
@@ -32,6 +35,7 @@ class UserController {
 
   async update (req, res) {
 
+    // validação
     const schema = Yup.object().shape({
       name: Yup.string(),
       email: Yup.string().email(),
@@ -48,6 +52,7 @@ class UserController {
       return res.status(400).json({error: 'Validation fails'});
     }
 
+    // update
     const { email, oldPassword } = req.body;
 
     const user = await User.findByPk(req.userId);
