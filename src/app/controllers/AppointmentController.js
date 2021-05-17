@@ -3,73 +3,76 @@ import { startOfHour, parseISO, isBefore } from 'date-fns'
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 
-class AppointmentController {
-  async save(req, res) {
-    /**
-     * Validação dos campos
-     */
-    const schema = Yup.object().shape({
-      provider_id: Yup.number().required(),
-      date: Yup.date().required(),
-    })
+async function validarRequisicao (req, res) {
+  const schema = Yup.object().shape({
+    provider_id: Yup.number().required(),
+    date: Yup.date().required(),
+  })
 
-    if (!(await schema.isValid(req.body))) {
-      return res.status(400).json( { error: 'Validation fails' });
-    }
+  if (!(await schema.isValid(req.body))) {
+    return res.status(400).json( { error: 'Validation fails' });
+  }
+  return null
+}
 
-    /**
-     * Pegando informações do corpo da requisição
-     */
-    const { provider_id, date } = req.body
+async function validarProvider(provider_id, res){
+  const checkIsProvider = await User.findOne({
+    where: { id: provider_id, provider: true}
+  })
 
-    /**
-     * Check if provider_id is a provider
-     */
-    const checkIsProvider = await User.findOne({
-      where: { id: provider_id, provider: true}
-    })
+  if (!checkIsProvider){
+    return res.status(401).json( { error: 'You can only appointments with providers!' });
+  }
+  return null
+}
 
-    if (!checkIsProvider){
-      return res.status(401).json( { error: 'You can only appointments with providers!' });
-    }
+async function validandoSeDataJaPassou(hourStart, res){
+  if (isBefore(hourStart, new Date())) {
+    return res.status(400).json( { error: 'Past dates are not permit!' });
+  }
+  return null
+}
 
-    /**
-     * Checkando na validação da hora se a data que
-     * se encontra no campo req.date não é uma data que já passou.
-     */
-    const hourStart = startOfHour(parseISO(date));
-
-    if (isBefore(hourStart, new Date())) {
-      return res.status(400).json( { error: 'Past dates are not permit!' });
-    }
-
-    /**
-     * Checkando se o agendador já não tem um agendamento nesse horario.
-     */
-    const checkAvailability = await Appointment.findOne({
-      where: {
-        provider_id,
-        canceled_at: null,
-        date: hourStart
-      }
-    })
-
-    if (checkAvailability) {
-      return res.status(400).json( { error: 'Appointment date is not available!' });
-    }
-
-    /**
-     * Salvando appointment
-     */
-
-    const appointment = await Appointment.create({
-      user_id: req.userId,
+async function validandoSeProviderJaTemAlgoAgendadoNesseHorario(provider_id, hourStart, res){
+  const checkAvailability = await Appointment.findOne({
+    where: {
       provider_id,
+      canceled_at: null,
       date: hourStart
-    })
+    }
+  })
+
+  if (checkAvailability) {
+    return res.status(400).json( { error: 'Appointment date is not available!' });
+  }
+  return null
+}
+
+async function salvandoAppointment(userId, provider_id, hourStart, res){
+  const appointment = await Appointment.create({
+    user_id: userId,
+    provider_id,
+    date: hourStart
+  })
+
+  return res.json (appointment);
+}
+
+class AppointmentController {
+
+  async save(req, res) {
+
+    await validarRequisicao(req, res);
+    const { provider_id, date } = req.body
+    await validarProvider(provider_id, res);
+    const hourStart = startOfHour(parseISO(date));
+    await validandoSeDataJaPassou(hourStart, res)
+    await validandoSeProviderJaTemAlgoAgendadoNesseHorario(provider_id, hourStart, res)
+    const appointment = await salvandoAppointment(req.userId, provider_id, hourStart, res)
 
     return res.json (appointment);
   }
+
 }
 
 export default new AppointmentController();
