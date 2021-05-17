@@ -15,19 +15,38 @@ import AppointmentController from './app/controllers/AppointmentController';
 const routes = new Router();
 const upload = multer(multerConfig);
 
-// GET
-routes.get('/providers', ProviderController.getAll)
 
-// POST
+  // GET
+
+  // POST
 routes.post('/users', UserController.save)
 routes.post('/sessions', SessionController.save)
+
+  // PUT
+
+  // DELETE
+
+// ----------------------------------------------------------------------
+/**
+ * ENDPOINTS QUE PRECISAM DE VERIFICAÇÃO DO TOKEN FICAM ABAIXO DESSA LINHA
+ */
+// ----------------------------------------------------------------------
+
+// VERIFICADOR DO TOKEN | TAMBÉM SETTA O VALOR DO USER_ID NA REQUISIÇÃO
+routes.use(authMiddleware);
+
+
+  // GET
+routes.get('/providers', ProviderController.getAll)
+
+  // POST
 routes.post('/files', upload.single('file'), FileController.save);
 routes.post('/appointment', AppointmentController.save);
 
-// PUT
-routes.put('/users', authMiddleware , UserController.update)
+  // PUT
+routes.put('/users', UserController.update)
 
-// DELETE
+  // DELETE
 
 
 
