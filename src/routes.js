@@ -38,6 +38,7 @@ routes.use(authMiddleware);
 
   // GET
 routes.get('/providers', ProviderController.getAll)
+routes.get('/appointment', AppointmentController.getAll)
 
   // POST
 routes.post('/files', upload.single('file'), FileController.save);
