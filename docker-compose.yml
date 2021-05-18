@@ -15,6 +15,15 @@ services:
     networks:
     - dev-network
 
+  mongodb:
+    image: mongo
+    volumes:
+      - ./var/lib/mongoDb/data
+    ports:
+    - "27017:27017"
+    networks:
+    - dev-network
+
 networks:
   dev-network:
     driver: bridge
