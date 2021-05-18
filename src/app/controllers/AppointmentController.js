@@ -1,8 +1,10 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore } from 'date-fns'
+import { startOfHour, parseISO, isBefore, format } from 'date-fns'
+import pt from 'date-fns/locale/pt'
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
+import Notification from '../schemas/Notification'
 
 async function validarRequisicao (req, res) {
   const schema = Yup.object().shape({
@@ -49,14 +51,14 @@ async function validandoSeProviderJaTemAlgoAgendadoNesseHorario(provider_id, hou
   return null
 }
 
-async function salvandoAppointment(userId, provider_id, hourStart, res){
+async function salvandoAppointment(userId, provider_id, hourStart){
   const appointment = await Appointment.create({
     user_id: userId,
     provider_id,
     date: hourStart
   })
 
-  return res.json (appointment);
+  return appointment;
 }
 
 async function buscarAppointmentsDoUsuarioQueEstaLogado(req, res){
@@ -86,6 +88,17 @@ async function buscarAppointmentsDoUsuarioQueEstaLogado(req, res){
   return res.json (appointments);
 }
 
+async function notificar(req, hourStart, provider_id){
+
+  const user = await User.findByPk(req.userId);
+  const formattedDate = format( hourStart, "'dia' dd 'de' MMMM', às' H:mm'h'", { locale: pt })
+  await Notification.create({
+    content: `Novo agendamento de ${user.name} para o ${formattedDate}`,
+    user: provider_id,
+  })
+
+  return null;
+}
 class AppointmentController {
 
   async getAll(req, res){
@@ -101,8 +114,9 @@ class AppointmentController {
     const hourStart = startOfHour(parseISO(date));
     await validandoSeDataJaPassou(hourStart, res)
     await validandoSeProviderJaTemAlgoAgendadoNesseHorario(provider_id, hourStart, res)
-    const appointment = await salvandoAppointment(req.userId, provider_id, hourStart, res)
+    const appointment = await salvandoAppointment(req.userId, provider_id, hourStart)
 
+    await notificar(req, hourStart, provider_id);
     return res.json (appointment);
   }
 
