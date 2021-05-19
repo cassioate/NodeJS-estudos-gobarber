@@ -12,6 +12,7 @@ import authMiddleware from './app/middlewares/auth';
 import multerConfig from './config/multer';
 import AppointmentController from './app/controllers/AppointmentController';
 import ScheduleController from './app/controllers/ScheduleController';
+import NotificationController from './app/controllers/NotificationController';
 
 const routes = new Router();
 const upload = multer(multerConfig);
@@ -41,15 +42,18 @@ routes.use(authMiddleware);
 routes.get('/providers', ProviderController.getAll)
 routes.get('/appointment', AppointmentController.getAll)
 routes.get('/schedule', ScheduleController.getAll)
+routes.get('/notifications', NotificationController.getAll)
+
   // POST
 routes.post('/files', upload.single('file'), FileController.save);
 routes.post('/appointment', AppointmentController.save);
 
   // PUT
 routes.put('/users', UserController.update)
+routes.put('/notifications/:id', NotificationController.update)
 
   // DELETE
-
+routes.delete('/appointment/:id', AppointmentController.delete)
 
 
 export default routes;
