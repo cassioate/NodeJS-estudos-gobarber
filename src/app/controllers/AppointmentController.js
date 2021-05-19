@@ -5,6 +5,8 @@ import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
 import Notification from '../schemas/Notification'
+import Queue from '../../lib/Queue';
+import CancellationMail from '../jobs/CancellationMail';
 
 async function validarRequisicao (req, res) {
   const schema = Yup.object().shape({
@@ -101,7 +103,20 @@ async function notificar(req, hourStart, provider_id){
 }
 
 async function buscandoAgendamento(req, res){
-  const appointment = await Appointment.findByPk(req.params.id);
+  const appointment = await Appointment.findByPk(req.params.id, {
+    include: [
+      {
+        model: User,
+        as: 'provider',
+        attributes: ['name', 'email'],
+      },
+      {
+        model: User,
+        as: 'user',
+        attributes: ['name'],
+      }
+    ],
+  });
 
   if (appointment.user_id !== req.userId){
     return res.status(401).json( { error: "You don't have permission to cancel this appointment!" });
@@ -121,6 +136,11 @@ async function validandoData(appointment, res){
 async function removendoAgendamento(appointment){
   appointment.canceled_at = new Date();
   await appointment.save();
+}
+
+async function enviandoEmailParaNotificarCancelamentoViaFila(appointment){
+  // APPOINTMENT tem que ser passado como objeto ou dará problema
+  await Queue.add(CancellationMail.key, { appointment })
 }
 class AppointmentController {
 
@@ -147,6 +167,7 @@ class AppointmentController {
     const appointment = await buscandoAgendamento(req, res);
     validandoData(appointment, res);
     removendoAgendamento(appointment);
+    enviandoEmailParaNotificarCancelamentoViaFila(appointment);
     return res.json(appointment);
   }
 }

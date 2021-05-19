@@ -24,6 +24,15 @@ services:
     networks:
     - dev-network
 
+  redisbarber:
+    image: redis:alpine
+    volumes:
+      - ./var/lib/redis/data
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-network
+
 networks:
   dev-network:
     driver: bridge
