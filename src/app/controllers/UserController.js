@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import File from '../models/File';
 import User from '../models/User';
 
 // SAVE *--------------------*
@@ -77,12 +78,22 @@ async function validarEmailEPassword (req, res) {
 }
 
 async function atualizandoUser (user, req, res) {
-  const { id, name, email, provider } = await user.update(req.body);
+  await user.update(req.body);
+  const { id, name, email, avatar, provider} = await User.findByPk(req.userId, {
+    include: [
+      {
+        model: File,
+        as: 'avatar',
+        attributes: ['id', 'path', 'url']
+      }
+    ]
+  })
 
   return res.json({
     id,
     name,
     email,
+    avatar,
     provider
   });
 }

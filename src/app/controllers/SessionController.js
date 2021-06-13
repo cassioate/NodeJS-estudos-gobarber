@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import * as Yup from 'yup';
 import auth from '../../config/auth';
+import File from '../models/File';
 
 import User from '../models/User';
 
@@ -17,7 +18,16 @@ async function validarRequisicao (req, res) {
 }
 
 async function validarUser (email, password, res) {
-  const user = await User.findOne({where: { email /* poderia ser email: email */ }})
+  const user = await User.findOne({
+    where: { email }, /* poderia ser email: email */
+    include: [
+      {
+        model: File,
+        as: 'avatar',
+        attributes: ['id', 'path', 'url']
+      }
+    ]
+  })
 
   if (!user){
     return res.status(401).json({error: 'User not found'});
@@ -29,12 +39,14 @@ async function validarUser (email, password, res) {
   return user;
 }
 
-async function criandoTokenJwt (id, name, email, res) {
+async function criandoTokenJwt (id, name, email, avatar, provider, res) {
   return res.json({
     user: {
       id,
       name,
       email,
+      avatar,
+      provider
     },
     token: jwt.sign(
       { id },
@@ -50,8 +62,8 @@ class SessionController {
     await validarRequisicao(req, res);
     const { email, password} = req.body;
     const user = await validarUser(email, password, res);
-    const { id, name } = user;
-    const retornoJson = criandoTokenJwt(id, name, email, res)
+    const { id, name, avatar, provider } = user;
+    const retornoJson = criandoTokenJwt(id, name, email, avatar, provider, res)
 
     return retornoJson
   }

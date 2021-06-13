@@ -28,6 +28,13 @@ async function realizandoABusca(req){
         ]
       },
     },
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['name']
+      }
+    ],
     order: ['date'],
     limit: 10,
     offset: (page - 1) * 10,
