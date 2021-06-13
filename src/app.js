@@ -1,5 +1,6 @@
 import express from "express";
 import 'express-async-errors'
+import cors from 'cors'
 import path from 'path'
 import * as Sentry from '@sentry/node'
 import Youch from 'youch'
@@ -24,6 +25,12 @@ class App {
   }
 
   middlewares() {
+
+    /** AMBIENTE DE PRODUÇÃO */
+    // this.server.use(cors({ origin: 'https://rocketseat.com.br }));
+    /** AMBIENTE DE DEV */
+    this.server.use(cors());
+
     this.server.use(Sentry.Handlers.requestHandler());
     this.server.use(express.json());
     this.server.use(
